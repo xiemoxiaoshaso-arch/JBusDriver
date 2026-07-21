@@ -13,9 +13,14 @@ import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.widget.Toolbar
 import android.text.TextUtils
+import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.EditText
+import android.widget.Spinner
 import android.widget.TextView
+import android.widget.Toast
 import com.afollestad.materialdialogs.MaterialDialog
 import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
@@ -39,6 +44,15 @@ class MainActivity : AppBaseActivity<MainContract.MainPresenter, MainContract.Ma
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (savedInstanceState != null) intent.putExtras(savedInstanceState)
+
+        // 👈 【核心修改 1】：App 启动时，自动读取本地保存的自定义源站域名，直接生效
+        val sp = getSharedPreferences("domain_config", Context.MODE_PRIVATE)
+        val savedUrl = sp.getString("custom_javbus_url", "")
+        if (!savedUrl.isNullOrEmpty()) {
+            me.jbusdriver.http.JAVBusService.defaultFastUrl = savedUrl
+            me.jbusdriver.http.JAVBusService.INSTANCE = me.jbusdriver.http.JAVBusService.getInstance(savedUrl)
+        }
+
         bindRx()
         initNavigationView()
         initFragments()
@@ -91,12 +105,10 @@ class MainActivity : AppBaseActivity<MainContract.MainPresenter, MainContract.Ma
             ll_telegram.setOnClickListener {
                 browse("https://t.me/joinchat/HBJbEA-ka9TcWzaxjmD4hw")
             }
+            
+            // 👈 【核心修改 2】：将原先“加载出现问题尝试点击”的点击事件，重定向到我们的源站设置对话框中
             ll_click_reload.setOnClickListener {
-                CacheLoader.lru.evictAll()
-                CacheLoader.acache.clear()
-                JBus.JBusServices.clear()
-                SplashActivity.start(this@MainActivity)
-                finish()
+                showDomainSettingDialog()
             }
 
             tv_app_setting.setOnClickListener {
@@ -212,6 +224,7 @@ class MainActivity : AppBaseActivity<MainContract.MainPresenter, MainContract.Ma
 
     @SuppressLint("ResourceAsColor")
     override fun <T> showContent(data: T?) {
+        /*
         if (data is UpdateBean) {
             val bean = data as UpdateBean
             if (viewContext.packageInfo?.versionCode ?: -1 < bean.versionCode) {
@@ -229,9 +242,11 @@ class MainActivity : AppBaseActivity<MainContract.MainPresenter, MainContract.Ma
                     .show()
             }
         }
+        */
         if (data is NoticeBean) {
             showNotice(data)
         }
+        
     }
 
     @SuppressLint("ResourceAsColor")
@@ -252,6 +267,61 @@ class MainActivity : AppBaseActivity<MainContract.MainPresenter, MainContract.Ma
                 .positiveText("知道了")
                 .show()
         }
+    }
+
+    // 👈 【核心修改 3】：加入弹窗的实现业务逻辑，使用 Android Support 的 AlertDialog 以防报错
+    private fun showDomainSettingDialog() {
+        val context: Context = this
+        val sp = context.getSharedPreferences("domain_config", Context.MODE_PRIVATE)
+        
+        val view = LayoutInflater.from(context).inflate(R.layout.dialog_change_domain, null)
+        val spinner = view.findViewById<Spinner>(R.id.spinner_domains)
+        val editText = view.findViewById<EditText>(R.id.et_custom_domain)
+
+        // 1. 【动态读取】从本地缓存中读取 Gitee 采集上来的最新镜像列表
+        val backupStr = sp.getString("backup_domains", "")
+        val domainList = if (backupStr.isNullOrEmpty()) {
+            // 💡 兜底机制：万一网络不好或者首次打开还没缓存成功，才用这三个作为保底展示
+            listOf(
+                "https://www.busjav.bond",
+                "https://www.fanbus.cyou",
+                "https://www.busjav.cyou"
+            )
+        } else {
+            // 将缓存的逗号分隔字符串，动态还原解析为域名列表 List
+            backupStr.split(",")
+        }
+
+        val adapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, domainList)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
+
+        // 回显当前正在使用的域名到输入框
+        val currentUrl = sp.getString("custom_javbus_url", me.jbusdriver.http.JAVBusService.defaultFastUrl)
+        editText.setText(currentUrl)
+
+        // 展示对话框（使用 support.v7 库的 AlertDialog 兼容包，防止编译报错）
+        android.support.v7.app.AlertDialog.Builder(context)
+            .setTitle("源站域名设置")
+            .setView(view)
+            .setPositiveButton("保存并应用") { dialog, _ ->
+                val inputUrl = editText.text.toString().trim()
+                val targetUrl = if (inputUrl.isNotEmpty()) inputUrl else spinner.selectedItem.toString()
+
+                if (targetUrl.startsWith("http://") || targetUrl.startsWith("https://")) {
+                    sp.edit().putString("custom_javbus_url", targetUrl).apply()
+                    
+                    me.jbusdriver.http.JAVBusService.defaultFastUrl = targetUrl
+                    me.jbusdriver.http.JAVBusService.INSTANCE = me.jbusdriver.http.JAVBusService.getInstance(targetUrl)
+                    
+                    Toast.makeText(context, "源站设置成功！已切换至：$targetUrl", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(context, "格式错误：域名必须以 http(s):// 开头", Toast.LENGTH_SHORT).show()
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton("取消") { dialog, _ -> dialog.dismiss() }
+            .show()
     }
 
     companion object {
