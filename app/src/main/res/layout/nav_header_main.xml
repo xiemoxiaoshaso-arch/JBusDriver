@@ -27,9 +27,7 @@
             android:gravity="center_vertical"
             android:text="JbusDriver" />
 
-
     </LinearLayout>
-
 
     <Space
         android:layout_width="@dimen/material_0dp"
@@ -51,7 +49,6 @@
             android:gravity="center_vertical"
             android:text="Telegram Group" />
 
-
     </LinearLayout>
 
     <Space
@@ -64,16 +61,14 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:drawableLeft="@drawable/ic_refresh_black_24dp"
+            android:drawableLeft="@drawable/ic_settings_black_24dp"
             android:drawablePadding="@dimen/material_4dp"
             android:drawableTint="@color/colorAccent"
             android:gravity="center_vertical"
-            android:text="加载出现问题,尝试点击此处" />
-
+            android:text="源站设置" />
 
     </LinearLayout>
 
