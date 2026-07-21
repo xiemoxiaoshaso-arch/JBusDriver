@@ -13,8 +13,7 @@ import retrofit2.http.Path
  * Created by Administrator on 2017/4/15 0015.
  */
 interface GitHub {
-    @Headers("Referer:https://gitlab.com/")
-    @GET("https://gitlab.com/Ccixyj/staticFile/-/raw/main/announce.json")
+    @GET("https://gitee.com/youshihouxiaoxie/jbus/raw/master/announce.json")
     fun announce(): Flowable<String>
 
 
