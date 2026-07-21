@@ -100,32 +100,12 @@ android {
 
 //使用git的Tag来自动定制Version
 def VersionCode() {
-    def cmd = 'git rev-list master --first-parent --count'//master分支
-//    def cmd = 'git tag'
-//    def cmd = 'git tag'
-//    def code = cmd.execute().text.trim().split("\n").size()
-    def code = cmd.execute().text.trim().toInteger()
-    logger.quiet(cmd + " >>>> code = " + code)
-    return code
+    return 1
 }
 
-//使用git的Tag来自动定制Version
 def VersionName() {
-    def cmd = ''' git log --tags --simplify-by-decoration --pretty="format:%d" '''
-    def tags = cmd.execute().text.readLines()
-    logger.quiet(cmd + " >>>> tags  = " + tags)
-    def verName = tags.find {
-        it.contains("tag:")
-    }.find(Pattern.compile(/tag: v[0-9a-z.-]+/)).replace("tag: v" ,"").trim()
-    logger.quiet(cmd + " >>>> verName  = " + verName)
-    cmd = 'git rev-list  --all  --count'
-    def code = cmd.execute().text.trim().toInteger()
-
-    def versionName = verName + "build" + code
-    logger.quiet(cmd + " >>>> versionName  = " + versionName)
-    return versionName
+    return "1.0.0"
 }
-
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
@@ -155,9 +135,12 @@ dependencies {
     addComponent "component_magnet"
     addComponent "component_plugin_manager"
 
+
     implementation "com.android.support:multidex:1.0.3" // 多dex配置
     implementation "com.wlqq.phantom:phantom-host-lib:${versions.phantom.allVersion}"
     implementation "com.wlqq.phantom:phantom-communication-lib:${versions.phantom.allVersion}"
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+
 }
 
 configurations.all { config ->
