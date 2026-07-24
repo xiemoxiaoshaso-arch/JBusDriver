@@ -172,13 +172,17 @@ class ActressListFragment : LinkableListFragment<ActressInfo>() {
             val urls =
                 CacheLoader.acache.getAsString(C.Cache.BUS_URLS)?.let { GSON.fromJson<ArrayMap<String, String>>(it) }
                     ?: arrayMapof()
-            val url = urls[type.key] ?: JAVBusService.defaultFastUrl+"/actresses"
+            
+            // 1. 动态判断基础域名：如果是欧美演员，使用 defaultXyzUrl 独立域名，否则使用 defaultFastUrl 主站域名
+            val defaultHost = if (type == DataSourceType.XYZ_ACTRESSES) JAVBusService.defaultXyzUrl else JAVBusService.defaultFastUrl
+            
+            // 2. 动态拼接：使用对应域名的根路径加上在 DataSourceType 中定义好的 type.key (如 "xyz/actresses")
+            val url = urls[type.key] ?: (defaultHost.trimEnd('/') + "/" + type.key)
+            
+            // 🌟 加上这一行高亮红色日志：
+            android.util.Log.e("JBUS_DEBUG_MENU", "【欧美演员入口】最终拼装出的请求 URL: $url")
+            
             arguments = Bundle().apply {
-                /*
-                *
-                * object : ILink {
-                    override val link: String = url
-                }*/
                 putSerializable(C.BundleKey.Key_1, PageLink(1, type.key, url))
                 putSerializable(ACTRESS_LIST_DATA_TYPE, type)
             }
