@@ -37,11 +37,17 @@ class MovieDetailPresenterImpl(private val fromHistory: Boolean) :
                         val saveKey = t.urlPath
                         CacheLoader.acache.getAsString(saveKey)?.let {
                             val old = GSON.fromJson<MovieDetail>(it)
-                            val res =
-                                if (old != null && mView?.movie?.link?.urlHost?.isEndWithXyzHost == false) {
-                                    val new = old.checkUrl(JAVBusService.defaultFastUrl)
-                                    if (old != new) CacheLoader.cacheDisk(saveKey to new)
-                                    new
+                            val res = if (old != null) {
+                                // 🌟 终极修复：如果是欧美区，使用自建域名 defaultXyzUrl 运行 checkUrl，从而把所有相对路径自动补全为欧美绝对路径！
+                                val host = if (mView?.movie?.link?.urlHost?.isEndWithXyzHost == true) {
+                                    JAVBusService.defaultXyzUrl
+                                } else {
+                                    JAVBusService.defaultFastUrl
+                                }
+                                android.util.Log.e("JBUS_DEBUG_DETAIL", "【看一下是什么域名：】请求绝对 URL: $host")
+                                val new = old.checkUrl(host)
+                                if (old != new) CacheLoader.cacheDisk(saveKey to new)
+                                new
                                 } else old
                             emitter.onNext(res)
                         } ?: emitter.onComplete()
