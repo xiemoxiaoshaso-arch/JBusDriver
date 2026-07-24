@@ -145,9 +145,9 @@ class SplashActivity : BaseActivity() {
                         if (JAVBusService.defaultXyzUrl.isNotBlank()) {
                             urls[DataSourceType.XYZ.key] = JAVBusService.defaultXyzUrl
                             urls[DataSourceType.XYZ_ACTRESSES.key] =
-                                "${JAVBusService.defaultXyzUrl}/actresses"
+                                "${JAVBusService.defaultXyzUrl.trimEnd('/')}/${DataSourceType.XYZ_ACTRESSES.key}"
                             urls[DataSourceType.XYZ_GENRE.key] =
-                                "${JAVBusService.defaultXyzUrl}/genre"
+                                "${JAVBusService.defaultXyzUrl.trimEnd('/')}/${DataSourceType.XYZ_GENRE.key}"
                         } else {
                             val host = JAVBusService.xyzHostDomains.firstOrNull() ?: "work"
                             val baseUrlSuffix =
