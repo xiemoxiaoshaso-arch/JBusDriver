@@ -54,11 +54,21 @@ class GenrePagesFragment : TabViewPagerFragment<GenrePagePresenter, GenrePageCon
 
     companion object {
 
+        // 🌟 核心修正：补全欧美类别域名判定与动态路径拼接
         fun newInstance(type: DataSourceType) = GenrePagesFragment().apply {
             val urls =
                 CacheLoader.acache.getAsString(C.Cache.BUS_URLS)?.let { GSON.fromJson<ArrayMap<String, String>>(it) }
                     ?: arrayMapof()
-            val url = urls[type.key] ?: JAVBusService.defaultFastUrl+"/genre"
+            
+            // 1. 判断基础域名：如果是欧美类别，使用 defaultXyzUrl 独立域名，否则使用 defaultFastUrl 主站域名
+            val defaultHost = if (type == DataSourceType.XYZ_GENRE) JAVBusService.defaultXyzUrl else JAVBusService.defaultFastUrl
+            
+            // 2. 动态拼接路径，使用对应域名加上 DataSourceType 中定义好的 type.key (如 "xyz/genre")
+            val url = urls[type.key] ?: (defaultHost.trimEnd('/') + "/" + type.key)
+            
+            // 🌟 加上这一行高亮红色日志：
+            android.util.Log.e("JBUS_DEBUG_MENU", "【欧美类别入口】最终拼装出的请求 URL: $url")
+
             arguments = Bundle().apply {
                 putString(C.BundleKey.Key_1, url)
             }
