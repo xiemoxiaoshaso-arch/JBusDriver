@@ -49,8 +49,8 @@ abstract class AbsMovieListFragment : LinkableListFragment<Movie>() {
                     link.link.urlHost.isEndWithXyzHost -> {
                         //xyz
                         when {
-                            path.startsWith("genre") -> DataSourceType.GENRE
-                            path.startsWith("star") -> DataSourceType.ACTRESSES
+                            path.startsWith(DataSourceType.XYZ_GENRE.key) -> DataSourceType.XYZ_GENRE
+                            path.startsWith(DataSourceType.XYZ_ACTRESSES.key) -> DataSourceType.XYZ_ACTRESSES
                             else -> DataSourceType.CENSORED
                         }
 
