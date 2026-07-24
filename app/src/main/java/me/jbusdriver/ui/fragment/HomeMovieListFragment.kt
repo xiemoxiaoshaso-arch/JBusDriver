@@ -14,8 +14,14 @@ import me.jbusdriver.ui.data.enums.DataSourceType
 class HomeMovieListFragment : AbsMovieListFragment(), LinkListContract.LinkListView {
     override fun createPresenter() = HomeMovieListPresenterImpl(
         type,
-        PageLink(1, "", JAVBusService.defaultFastUrl) /*PageLink没什么用,默认设置JAVBusService.defaultFastUrl就可以*/
+        PageLink(
+            1, 
+            "", 
+            // 🌟 核心修正：如果是欧美板块，传入欧美独立域名，否则传入主站域名
+            if (type == DataSourceType.XYZ) JAVBusService.defaultXyzUrl else JAVBusService.defaultFastUrl
+        )
     )
+
 
     /*================================================*/
     companion object {
