@@ -29,17 +29,35 @@ open class HomeMovieListPresenterImpl(val type: DataSourceType, val link: ILink)
     }
     private val saveKey: String
         inline get() = "${type.key}$IsAll"
+    // 🌟 核心修正 1：实例化 Retrofit 服务时，欧美区必须使用 defaultXyzUrl 独立域名
     private val service by lazy {
+        val defaultHost = if (type == DataSourceType.XYZ) JAVBusService.defaultXyzUrl else JAVBusService.defaultFastUrl
         JAVBusService.getInstance(
-            urls[type.key]
-                ?: JAVBusService.defaultFastUrl
+            urls[type.key] ?: defaultHost
         ).apply { JAVBusService.INSTANCE = this }
     }
 
+    // 🌟 核心修正 1：实例化 Retrofit 服务时，欧美区必须使用 defaultXyzUrl 独立域名
+    private val service by lazy {
+        val defaultHost = if (type == DataSourceType.XYZ) JAVBusService.defaultXyzUrl else JAVBusService.defaultFastUrl
+        JAVBusService.getInstance(
+            urls[type.key] ?: defaultHost
+        ).apply { JAVBusService.INSTANCE = this }
+    }
+
+    // 🌟 核心修正 2：在构建网络请求 urlN 时，欧美区必须使用 defaultXyzUrl 独立域名作为基础进行拼接
     private val loadFromNet = { page: Int ->
-        val urlN = urls.getOrElse(type.key) { JAVBusService.defaultFastUrl }.let { url ->
+        val defaultHost = if (type == DataSourceType.XYZ) JAVBusService.defaultXyzUrl else JAVBusService.defaultFastUrl
+        val urlN = urls.getOrElse(type.key) { defaultHost }.let { url ->
             return@let if (page == 1) url else "$url${type.prefix}$page"
         }
+        // 🌟 核心调试：在这里加入最高级别的红色高亮日志打印
+        android.util.Log.e("JBUS_DEBUG", "==================================================")
+        android.util.Log.e("JBUS_DEBUG", "【请求触发】当前点击板块名称: ${type.key}")
+        android.util.Log.e("JBUS_DEBUG", "【请求触发】从缓存 urls[${type.key}] 中获取的值: ${urls[type.key]}")
+        android.util.Log.e("JBUS_DEBUG", "【请求触发】当前的备用域名 defaultHost: $defaultHost")
+        android.util.Log.e("JBUS_DEBUG", "【请求触发】最终拼装发出的网络请求 urlN: $urlN")
+        android.util.Log.e("JBUS_DEBUG", "==================================================")
         KLog.d("loadFromNet $urlN")
         //existmag=all
         //add his
